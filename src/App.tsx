@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Terminal as TerminalIcon, Shield, Cpu, Network, Zap, X, Github, ExternalLink } from 'lucide-react';
+import { Terminal as TerminalIcon, Shield, Cloud, Cpu, Bot, Network, Zap, Code, ExternalLink } from 'lucide-react';
 import { projects, type Project } from './data/projects';
 
 // --- Types ---
@@ -63,12 +63,10 @@ const App: React.FC = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [history]);
 
-  // Keep focus on input
   useEffect(() => {
     if (booted && !activeProject) {
       inputRef.current?.focus();
@@ -79,9 +77,7 @@ const App: React.FC = () => {
     const trimmedCmd = cmd.trim();
     if (!trimmedCmd) return;
 
-    // Security: Add raw user input to history (React will escape it safely)
     const newHistory: HistoryItem[] = [...history, { id: Date.now().toString(), type: 'input', content: trimmedCmd }];
-
     const parts = trimmedCmd.toLowerCase().split(' ');
     const command = parts[0];
     const arg = parts[1];
@@ -97,8 +93,8 @@ const App: React.FC = () => {
               <div style={{ paddingLeft: '1rem', color: 'var(--neon-cyan)' }}>
                 <div>whoami  - Display user profile</div>
                 <div>ls      - List available projects</div>
-                <div>cat     - Read project details (e.g., cat archshield-pro)</div>
-                <div>execute - Launch the project GUI (e.g., execute archshield-pro)</div>
+                <div>cat     - Read project details (e.g., cat archshield)</div>
+                <div>execute - Launch the project GUI (e.g., execute archshield)</div>
                 <div>clear   - Clear terminal output</div>
               </div>
             </div>
@@ -112,7 +108,7 @@ const App: React.FC = () => {
           type: 'output',
           content: (
             <div>
-              <div className="glow-text-purple">User: JESUS (Absolute Authority)</div>
+              <div className="glow-text-purple">User: ViniciusPHDU (Absolute Authority)</div>
               <div>Role: Senior Systems Architect & Reverse Engineer</div>
               <div>Base: Arch Linux / Hyprland</div>
               <div>Specialization: Memory Injection, Network Tunneling, Automation</div>
@@ -173,10 +169,9 @@ const App: React.FC = () => {
 
       case 'clear':
         setHistory([]);
-        return; // Early return to avoid setting state twice
+        return;
 
       default:
-        // Security: Echoing invalid command. React escapes 'trimmedCmd' automatically.
         newHistory.push({
           id: Date.now().toString() + 'err',
           type: 'error',
@@ -192,6 +187,16 @@ const App: React.FC = () => {
     return <BootSequence onComplete={() => setBooted(true)} />;
   }
 
+  const getIcon = (category: string) => {
+    switch (category) {
+      case 'Security': return <Shield className="w-6 h-6 text-neon-cyan" />;
+      case 'Backend': return <Cloud className="w-6 h-6 text-neon-purple" />;
+      case 'Rust': return <Cpu className="w-6 h-6 text-neon-cyan" />;
+      case 'Automation': return <Bot className="w-6 h-6 text-neon-purple" />;
+      default: return <TerminalIcon className="w-6 h-6" />;
+    }
+  };
+
   return (
     <>
       <div className="scanlines"></div>
@@ -199,7 +204,7 @@ const App: React.FC = () => {
       
       <div className="os-container">
         
-        {/* HUD (Heads Up Display) */}
+        {/* HUD */}
         <aside className="hud-panel">
           <div className="hud-title glow-text-purple">VINICIUSPHDU</div>
           
@@ -251,7 +256,7 @@ const App: React.FC = () => {
           <div className="terminal-history">
             {history.map(item => (
               <div key={item.id} className="term-line">
-                {item.type === 'input' && <span className="term-prompt">jesus@arch ~$</span>}
+                {item.type === 'input' && <span className="term-prompt">vinicius@arch ~$</span>}
                 <span style={{ 
                   color: item.type === 'error' ? 'red' : 
                          item.type === 'system' ? 'var(--text-muted)' : 
@@ -263,7 +268,7 @@ const App: React.FC = () => {
             ))}
             
             <div className="term-input-line">
-              <span className="term-prompt">jesus@arch ~$</span>
+              <span className="term-prompt">vinicius@arch ~$</span>
               <input 
                 ref={inputRef}
                 type="text" 
@@ -284,12 +289,15 @@ const App: React.FC = () => {
           </div>
         </main>
 
-        {/* GUI Modal (Opened via 'execute' command) */}
+        {/* GUI Modal */}
         {activeProject && (
           <div className="project-gui-overlay" onClick={() => setActiveProject(null)}>
             <div className="project-gui" onClick={e => e.stopPropagation()}>
-              <button className="gui-close" onClick={() => setActiveProject(null)}>KILL -9</button>
-              <h2 className="gui-title">{activeProject.title}</h2>
+              <button className="gui-close" onClick={() => setActiveProject(null)}>[ X ] KILL</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                {getIcon(activeProject.category)}
+                <h2 className="gui-title" style={{ margin: 0 }}>{activeProject.title}</h2>
+              </div>
               <p className="gui-desc">{activeProject.longDescription}</p>
               
               <div className="gui-tech">
@@ -298,10 +306,11 @@ const App: React.FC = () => {
                 ))}
               </div>
 
-              <a href={activeProject.githubUrl} target="_blank" rel="noopener noreferrer" className="gui-link">
-                <Github className="w-4 h-4" style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }}/> 
-                ACESSAR CÓDIGO-FONTE <ExternalLink className="w-3 h-3" style={{ display: 'inline', marginLeft: '0.5rem', verticalAlign: 'middle' }}/>
-              </a>
+              <div className="modal-actions" style={{ marginTop: '1rem' }}>
+                <a href={activeProject.githubUrl} target="_blank" rel="noopener noreferrer" className="btn-primary neon-border" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem 2rem', background: 'var(--neon-purple)', color: 'white', textDecoration: 'none', borderRadius: '8px', fontWeight: 'bold' }}>
+                  <Code className="w-5 h-5" /> REPOSITÓRIO <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
             </div>
           </div>
         )}
