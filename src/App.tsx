@@ -19,7 +19,7 @@ const App: React.FC = () => {
     <div className="container">
       {/* Header Section */}
       <header className="hero">
-        <h1 className="glow-purple">SOVEREIGN ENGINEERING</h1>
+        <h1 className="glow-purple">VINICIUSPHDU ENGINEERING</h1>
         <p className="subtitle mono">Architecting the future through hardware and software infiltration.</p>
         <div className="header-tags">
           <span className="tag neon-border">Arch Linux</span>
