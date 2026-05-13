@@ -1,0 +1,57 @@
+:root {
+  --bg-color: #05010a;
+  --panel-bg: rgba(20, 10, 40, 0.6);
+  --neon-purple: #b026ff;
+  --neon-cyan: #00f3ff;
+  --text-main: #e0e0e0;
+  --text-dim: #a0a0a0;
+  --font-mono: 'Fira Code', 'JetBrains Mono', monospace;
+  --font-sans: 'Inter', 'Space Grotesk', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollbar Neon */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--neon-purple);
+  border-radius: 10px;
+  box-shadow: 0 0 10px var(--neon-purple);
+}
+
+/* Glow Utilities */
+.glow-purple {
+  text-shadow: 0 0 10px var(--neon-purple), 0 0 20px var(--neon-purple);
+}
+
+.glow-cyan {
+  text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan);
+}
+
+.neon-border {
+  border: 1px solid var(--neon-purple);
+  box-shadow: 0 0 15px rgba(176, 38, 255, 0.3);
+}
