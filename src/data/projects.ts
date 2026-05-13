@@ -15,7 +15,7 @@ export const projects: Project[] = [
     description: "Monitoramento de rede e detecção de anomalias com Machine Learning.",
     longDescription: "Uma solução de elite para segurança de rede no Arch Linux. Utiliza Scapy para captura de pacotes em tempo real e Scikit-Learn (IsolationForest) para identificar comportamentos anômalos de rede. Possui dashboard em FastAPI e integração profunda com Iptables.",
     stack: ["Python", "Scapy", "FastAPI", "Scikit-Learn", "Arch Linux"],
-    githubUrl: "https://github.com/ViniciusPHDU20/ArchShield_PRO",
+    githubUrl: "https://github.com/ViniciusPHDU20/ArchShield",
     category: "Security"
   },
   {
