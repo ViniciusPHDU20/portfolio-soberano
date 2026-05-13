@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Terminal, Shield, Cloud, Download, Cpu, Bot, Github, ExternalLink, ChevronRight, X } from 'lucide-react';
-import { projects, Project } from './data/projects';
+import { Terminal, Shield, Cloud, Cpu, Bot, Code, ExternalLink, ChevronRight, X } from 'lucide-react';
+import { projects, type Project } from './data/projects';
 
 const App: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -73,7 +73,7 @@ const App: React.FC = () => {
 
             <div className="modal-actions">
               <a href={selectedProject.githubUrl} target="_blank" rel="noopener noreferrer" className="btn-primary neon-border">
-                <Github className="w-5 h-5" /> REPOSITÓRIO
+                <Code className="w-5 h-5" /> REPOSITÓRIO <ExternalLink className="w-4 h-4" />
               </a>
             </div>
           </div>
@@ -249,6 +249,8 @@ const App: React.FC = () => {
 
         .modal-actions {
           margin-top: 1rem;
+          display: flex;
+          gap: 1rem;
         }
 
         .btn-primary {
