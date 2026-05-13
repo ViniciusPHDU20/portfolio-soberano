@@ -1,288 +1,313 @@
-import React, { useState } from 'react';
-import { Terminal, Shield, Cloud, Cpu, Bot, Code, ExternalLink, ChevronRight, X } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Terminal as TerminalIcon, Shield, Cpu, Network, Zap, X, Github, ExternalLink } from 'lucide-react';
 import { projects, type Project } from './data/projects';
 
-const App: React.FC = () => {
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+// --- Types ---
+type HistoryItem = {
+  id: string;
+  type: 'input' | 'output' | 'system' | 'error';
+  content: React.ReactNode;
+};
 
-  const getIcon = (category: string) => {
-    switch (category) {
-      case 'Security': return <Shield className="w-6 h-6 text-neon-cyan" />;
-      case 'Backend': return <Cloud className="w-6 h-6 text-neon-purple" />;
-      case 'Rust': return <Cpu className="w-6 h-6 text-neon-cyan" />;
-      case 'Automation': return <Bot className="w-6 h-6 text-neon-purple" />;
-      default: return <Terminal className="w-6 h-6" />;
-    }
-  };
+// --- Boot Sequence Component ---
+const BootSequence: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+  const [lines, setLines] = useState<React.ReactNode[]>([]);
+  
+  useEffect(() => {
+    const bootSteps = [
+      <span key="1">Initializing Sovereign Kernel v6.6.9-arch1-1... <span className="boot-ok">[OK]</span></span>,
+      <span key="2">Mounting root filesystem... <span className="boot-ok">[OK]</span></span>,
+      <span key="3">Loading hardware drivers (RTX 3060 Ti)... <span className="boot-ok">[OK]</span></span>,
+      <span key="4">Establishing secure ZeroTier tunnel... <span className="boot-ok">[OK]</span></span>,
+      <span key="5">Bypassing standard authentication protocols... <span className="boot-warn">[WARN]</span></span>,
+      <span key="6">Injecting memory hooks (AOB Scan)... <span className="boot-ok">[OK]</span></span>,
+      <span key="7">Starting Sovereign UI... <span className="boot-ok">[OK]</span></span>,
+      <br key="8" />,
+      <span key="9" className="glow-text-purple" style={{ fontSize: '1.2rem' }}>ACCESS GRANTED. WELCOME, JESUS.</span>
+    ];
+
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      if (currentStep < bootSteps.length) {
+        setLines(prev => [...prev, bootSteps[currentStep]]);
+        currentStep++;
+      } else {
+        clearInterval(interval);
+        setTimeout(onComplete, 1000);
+      }
+    }, 300);
+
+    return () => clearInterval(interval);
+  }, [onComplete]);
 
   return (
-    <div className="container">
-      {/* Header Section */}
-      <header className="hero">
-        <h1 className="glow-purple">VINICIUSPHDU ENGINEERING</h1>
-        <p className="subtitle mono">Architecting the future through hardware and software infiltration.</p>
-        <div className="header-tags">
-          <span className="tag neon-border">Arch Linux</span>
-          <span className="tag neon-border">Reverse Engineering</span>
-          <span className="tag neon-border">Automation</span>
-        </div>
-      </header>
+    <div className="boot-sequence">
+      <div className="scanlines"></div>
+      <div className="vignette"></div>
+      {lines.map((line, i) => (
+        <div key={i} className="boot-line">{line}</div>
+      ))}
+    </div>
+  );
+};
 
-      {/* Projects Grid */}
-      <main className="projects-grid">
-        {projects.map((project) => (
-          <div 
-            key={project.id} 
-            className="project-card neon-border"
-            onClick={() => setSelectedProject(project)}
-          >
-            <div className="card-header">
-              {getIcon(project.category)}
-              <span className="category-tag mono">{project.category}</span>
-            </div>
-            <h3>{project.title}</h3>
-            <p>{project.description}</p>
-            <div className="card-footer">
-              <span className="learn-more">Ver Detalhes <ChevronRight className="w-4 h-4" /></span>
-            </div>
-          </div>
-        ))}
-      </main>
+// --- Main App Component ---
+const App: React.FC = () => {
+  const [booted, setBooted] = useState(false);
+  const [input, setInput] = useState('');
+  const [history, setHistory] = useState<HistoryItem[]>([
+    { id: 'init', type: 'system', content: 'Sovereign OS v2.0 ready. Type "help" to see available commands.' }
+  ]);
+  const [activeProject, setActiveProject] = useState<Project | null>(null);
+  
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-      {/* Project Modal */}
-      {selectedProject && (
-        <div className="modal-overlay" onClick={() => setSelectedProject(null)}>
-          <div className="modal-content neon-border" onClick={e => e.stopPropagation()}>
-            <button className="close-btn" onClick={() => setSelectedProject(null)}>
-              <X className="w-6 h-6" />
-            </button>
-            <div className="modal-header">
-              {getIcon(selectedProject.category)}
-              <h2 className="glow-purple">{selectedProject.title}</h2>
-            </div>
-            <p className="modal-long-desc">{selectedProject.longDescription}</p>
-            
-            <div className="modal-tech-stack">
-              <h4>TECH STACK:</h4>
-              <div className="stack-tags">
-                {selectedProject.stack.map(tech => (
-                  <span key={tech} className="tech-tag mono">{tech}</span>
-                ))}
+  // Auto-scroll to bottom
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [history]);
+
+  // Keep focus on input
+  useEffect(() => {
+    if (booted && !activeProject) {
+      inputRef.current?.focus();
+    }
+  }, [booted, activeProject]);
+
+  const handleCommand = (cmd: string) => {
+    const trimmedCmd = cmd.trim();
+    if (!trimmedCmd) return;
+
+    // Security: Add raw user input to history (React will escape it safely)
+    const newHistory: HistoryItem[] = [...history, { id: Date.now().toString(), type: 'input', content: trimmedCmd }];
+
+    const parts = trimmedCmd.toLowerCase().split(' ');
+    const command = parts[0];
+    const arg = parts[1];
+
+    switch (command) {
+      case 'help':
+        newHistory.push({
+          id: Date.now().toString() + 'out',
+          type: 'output',
+          content: (
+            <div>
+              <div>Available commands:</div>
+              <div style={{ paddingLeft: '1rem', color: 'var(--neon-cyan)' }}>
+                <div>whoami  - Display user profile</div>
+                <div>ls      - List available projects</div>
+                <div>cat     - Read project details (e.g., cat archshield-pro)</div>
+                <div>execute - Launch the project GUI (e.g., execute archshield-pro)</div>
+                <div>clear   - Clear terminal output</div>
               </div>
             </div>
+          )
+        });
+        break;
+      
+      case 'whoami':
+        newHistory.push({
+          id: Date.now().toString() + 'out',
+          type: 'output',
+          content: (
+            <div>
+              <div className="glow-text-purple">User: JESUS (Absolute Authority)</div>
+              <div>Role: Senior Systems Architect & Reverse Engineer</div>
+              <div>Base: Arch Linux / Hyprland</div>
+              <div>Specialization: Memory Injection, Network Tunneling, Automation</div>
+            </div>
+          )
+        });
+        break;
 
-            <div className="modal-actions">
-              <a href={selectedProject.githubUrl} target="_blank" rel="noopener noreferrer" className="btn-primary neon-border">
-                <Code className="w-5 h-5" /> REPOSITÓRIO <ExternalLink className="w-4 h-4" />
+      case 'ls':
+        newHistory.push({
+          id: Date.now().toString() + 'out',
+          type: 'output',
+          content: (
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', color: 'var(--terminal-green)' }}>
+              {projects.map(p => <span key={p.id}>{p.id}</span>)}
+            </div>
+          )
+        });
+        break;
+
+      case 'cat':
+        if (!arg) {
+          newHistory.push({ id: Date.now().toString() + 'err', type: 'error', content: 'cat: missing operand' });
+        } else {
+          const proj = projects.find(p => p.id === arg);
+          if (proj) {
+            newHistory.push({
+              id: Date.now().toString() + 'out',
+              type: 'output',
+              content: (
+                <div>
+                  <div style={{ color: 'var(--neon-cyan)' }}>Title: {proj.title}</div>
+                  <div>Desc: {proj.description}</div>
+                  <div>Type "execute {proj.id}" for full interface.</div>
+                </div>
+              )
+            });
+          } else {
+            newHistory.push({ id: Date.now().toString() + 'err', type: 'error', content: `cat: ${arg}: No such file or project` });
+          }
+        }
+        break;
+
+      case 'execute':
+      case 'launch':
+        if (!arg) {
+          newHistory.push({ id: Date.now().toString() + 'err', type: 'error', content: `${command}: missing operand` });
+        } else {
+          const proj = projects.find(p => p.id === arg);
+          if (proj) {
+            newHistory.push({ id: Date.now().toString() + 'sys', type: 'system', content: `Launching GUI for ${proj.title}...` });
+            setActiveProject(proj);
+          } else {
+            newHistory.push({ id: Date.now().toString() + 'err', type: 'error', content: `${command}: ${arg}: Target not found` });
+          }
+        }
+        break;
+
+      case 'clear':
+        setHistory([]);
+        return; // Early return to avoid setting state twice
+
+      default:
+        // Security: Echoing invalid command. React escapes 'trimmedCmd' automatically.
+        newHistory.push({
+          id: Date.now().toString() + 'err',
+          type: 'error',
+          content: `bash: ${trimmedCmd}: command not found`
+        });
+        break;
+    }
+
+    setHistory(newHistory);
+  };
+
+  if (!booted) {
+    return <BootSequence onComplete={() => setBooted(true)} />;
+  }
+
+  return (
+    <>
+      <div className="scanlines"></div>
+      <div className="vignette"></div>
+      
+      <div className="os-container">
+        
+        {/* HUD (Heads Up Display) */}
+        <aside className="hud-panel">
+          <div className="hud-title glow-text-purple">VINICIUSPHDU</div>
+          
+          <div className="hud-section">
+            <h3><TerminalIcon className="w-4 h-4" /> SYSTEM STATUS</h3>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              <div>OS: Arch Linux x86_64</div>
+              <div>Kernel: 6.6.9-arch1-1</div>
+              <div>WM: Hyprland (Wayland)</div>
+              <div>Uptime: 13 days, 4 hours</div>
+            </div>
+          </div>
+
+          <div className="hud-section">
+            <h3><Zap className="w-4 h-4" /> SKILL RADAR</h3>
+            
+            <div className="skill-bar-container">
+              <div className="skill-label"><span>Reverse Engineering</span> <span>98%</span></div>
+              <div className="skill-bar"><div className="skill-fill" style={{ width: '98%' }}></div></div>
+            </div>
+            
+            <div className="skill-bar-container">
+              <div className="skill-label"><span>Rust / C++</span> <span>95%</span></div>
+              <div className="skill-bar"><div className="skill-fill" style={{ width: '95%' }}></div></div>
+            </div>
+            
+            <div className="skill-bar-container">
+              <div className="skill-label"><span>Network Tunneling</span> <span>90%</span></div>
+              <div className="skill-bar"><div className="skill-fill" style={{ width: '90%' }}></div></div>
+            </div>
+            
+            <div className="skill-bar-container">
+              <div className="skill-label"><span>React / Frontend</span> <span>85%</span></div>
+              <div className="skill-bar"><div className="skill-fill" style={{ width: '85%' }}></div></div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Terminal */}
+        <main className="terminal-panel" onClick={() => inputRef.current?.focus()}>
+          <div className="terminal-header">
+            <div className="terminal-title">~/sovereign-node</div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <Shield className="w-4 h-4 text-neon-cyan" />
+              <Network className="w-4 h-4 text-neon-purple" />
+            </div>
+          </div>
+
+          <div className="terminal-history">
+            {history.map(item => (
+              <div key={item.id} className="term-line">
+                {item.type === 'input' && <span className="term-prompt">jesus@arch ~$</span>}
+                <span style={{ 
+                  color: item.type === 'error' ? 'red' : 
+                         item.type === 'system' ? 'var(--text-muted)' : 
+                         'inherit' 
+                }}>
+                  {item.content}
+                </span>
+              </div>
+            ))}
+            
+            <div className="term-input-line">
+              <span className="term-prompt">jesus@arch ~$</span>
+              <input 
+                ref={inputRef}
+                type="text" 
+                className="term-input"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    handleCommand(input);
+                    setInput('');
+                  }
+                }}
+                autoComplete="off"
+                spellCheck="false"
+              />
+            </div>
+            <div ref={bottomRef}></div>
+          </div>
+        </main>
+
+        {/* GUI Modal (Opened via 'execute' command) */}
+        {activeProject && (
+          <div className="project-gui-overlay" onClick={() => setActiveProject(null)}>
+            <div className="project-gui" onClick={e => e.stopPropagation()}>
+              <button className="gui-close" onClick={() => setActiveProject(null)}>KILL -9</button>
+              <h2 className="gui-title">{activeProject.title}</h2>
+              <p className="gui-desc">{activeProject.longDescription}</p>
+              
+              <div className="gui-tech">
+                {activeProject.stack.map(t => (
+                  <span key={t} className="gui-tag">{t}</span>
+                ))}
+              </div>
+
+              <a href={activeProject.githubUrl} target="_blank" rel="noopener noreferrer" className="gui-link">
+                <Github className="w-4 h-4" style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }}/> 
+                ACESSAR CÓDIGO-FONTE <ExternalLink className="w-3 h-3" style={{ display: 'inline', marginLeft: '0.5rem', verticalAlign: 'middle' }}/>
               </a>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Footer */}
-      <footer className="footer">
-        <p className="mono">© 2026 ViniciusPHDU - Absolute Authority</p>
-      </footer>
-
-      <style>{`
-        .container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 2rem;
-        }
-
-        .hero {
-          text-align: center;
-          margin-bottom: 4rem;
-          padding: 4rem 0;
-        }
-
-        .hero h1 {
-          font-size: 3.5rem;
-          letter-spacing: 0.2rem;
-          margin-bottom: 1rem;
-        }
-
-        .subtitle {
-          color: var(--neon-cyan);
-          font-size: 1.2rem;
-          margin-bottom: 2rem;
-        }
-
-        .header-tags {
-          display: flex;
-          justify-content: center;
-          gap: 1rem;
-        }
-
-        .tag {
-          padding: 0.4rem 1rem;
-          border-radius: 20px;
-          font-size: 0.8rem;
-          background: rgba(176, 38, 255, 0.1);
-        }
-
-        .projects-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          gap: 2rem;
-        }
-
-        .project-card {
-          background: var(--panel-bg);
-          backdrop-filter: blur(10px);
-          padding: 2rem;
-          border-radius: 12px;
-          cursor: pointer;
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-
-        .project-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 0 30px rgba(176, 38, 255, 0.4);
-        }
-
-        .card-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .category-tag {
-          font-size: 0.7rem;
-          color: var(--text-dim);
-          text-transform: uppercase;
-          letter-spacing: 1px;
-        }
-
-        .project-card h3 {
-          font-size: 1.5rem;
-          color: var(--neon-cyan);
-        }
-
-        .card-footer {
-          margin-top: auto;
-          display: flex;
-          align-items: center;
-          color: var(--neon-purple);
-        }
-
-        .learn-more {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 0.9rem;
-          font-weight: bold;
-        }
-
-        /* Modal Styles */
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.85);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 1000;
-          backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-          background: #0a0515;
-          width: 90%;
-          max-width: 700px;
-          padding: 3rem;
-          border-radius: 15px;
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-        }
-
-        .close-btn {
-          position: absolute;
-          top: 1rem;
-          right: 1rem;
-          background: none;
-          border: none;
-          color: var(--text-dim);
-          cursor: pointer;
-        }
-
-        .modal-header {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        .modal-header h2 {
-          font-size: 2rem;
-        }
-
-        .modal-long-desc {
-          color: var(--text-main);
-          font-size: 1.1rem;
-        }
-
-        .stack-tags {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.5rem;
-          margin-top: 0.5rem;
-        }
-
-        .tech-tag {
-          background: #1a0a2e;
-          padding: 0.3rem 0.8rem;
-          border-radius: 4px;
-          font-size: 0.8rem;
-          color: var(--neon-cyan);
-          border: 1px solid rgba(0, 243, 255, 0.2);
-        }
-
-        .modal-actions {
-          margin-top: 1rem;
-          display: flex;
-          gap: 1rem;
-        }
-
-        .btn-primary {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.8rem;
-          padding: 0.8rem 2rem;
-          background: var(--neon-purple);
-          color: white;
-          text-decoration: none;
-          border-radius: 8px;
-          font-weight: bold;
-          transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-          background: white;
-          color: var(--neon-purple);
-          box-shadow: 0 0 20px white;
-        }
-
-        .footer {
-          margin-top: 4rem;
-          text-align: center;
-          padding: 2rem;
-          border-top: 1px solid rgba(176, 38, 255, 0.1);
-          color: var(--text-dim);
-        }
-
-        .mono { font-family: var(--font-mono); }
-      `}</style>
-    </div>
+      </div>
+    </>
   );
 };
 
