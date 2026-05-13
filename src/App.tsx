@@ -82,7 +82,7 @@ const App: React.FC = () => {
 
       {/* Footer */}
       <footer className="footer">
-        <p className="mono">© 2026 JESUS - Absolute Authority</p>
+        <p className="mono">© 2026 ViniciusPHDU - Absolute Authority</p>
       </footer>
 
       <style>{`
